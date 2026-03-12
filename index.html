@@ -592,7 +592,7 @@ function closeDetail() {
   render();
 }
 
-function catOpts(cur) { return CATS.map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join(''); }
+function catOpts(cur) { return getCats().map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join(''); }
 
 function renderDetail(p) {
   const contactsHtml = (p.contacts||[]).map((c,i)=>`
