@@ -599,7 +599,7 @@ function render() {
       <td>${contactHtml}</td>
       <td class="contact-mini" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">${p.email?esc(p.email):'—'}</td>
       <td class="star-col">${starDisplay(p.rating||0)}</td>
-      <td style="white-space:nowrap">${p.contractSigned?'<span title="Contract de parteneriat semnat">🤝</span>':''} ${hasNotes?'<span title="Note">📌</span>':''}</td>
+      <td style="white-space:nowrap">${p.contractSigned?'<span title="Contract de parteneriat semnat">🤝</span>':''} ${hasNotes?'<span title="Note">🗒️</span>':''}</td>
     </tr>`;
   }).join('');
 }
@@ -665,6 +665,13 @@ function renderDetail(p) {
             <span>Contract de parteneriat semnat ${p.contractSigned?'<span class="contract-signed">🤝</span>':''}</span>
           </label>
         </div>
+        <div class="fg full">
+          <label>Link contract (Google Drive)</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input class="fi" id="e-contract-link" value="${esc(p.contractLink||'')}" placeholder="https://drive.google.com/..." style="flex:1">
+            ${p.contractLink ? `<a href="${esc(p.contractLink)}" target="_blank" style="white-space:nowrap;font-size:12px;color:var(--navy);font-weight:600;text-decoration:none" title="Deschide în Drive">📂 Deschide</a>` : ''}
+          </div>
+        </div>
         <div class="fg full" style="margin-top:4px">
           <label>Relație / Potențial</label>
           <div class="star-rating" id="e-rating">
@@ -703,6 +710,7 @@ function saveDetail(id) {
   p.address = document.getElementById('e-address').value.trim();
   p.context = document.getElementById('e-context').value.trim();
   p.contractSigned = document.getElementById('e-contract').checked;
+  p.contractLink = document.getElementById('e-contract-link').value.trim();
   p.notes   = document.getElementById('e-notes').value;
   const fl = document.getElementById('fl');
   fl.classList.add('show'); setTimeout(()=>fl.classList.remove('show'), 2000);
