@@ -1,8 +1,0 @@
-{
-  "name": "iel-parteneri",
-  "version": "1.0.0",
-  "description": "iEL Partner Database – Netlify + Google Sheets backend",
-  "dependencies": {
-    "googleapis": "^140.0.0"
-  }
-}
