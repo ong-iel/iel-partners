@@ -81,6 +81,8 @@
   }
   .tab:hover { border-color: var(--orange); color: var(--orange); }
   .tab.active { background: var(--orange); color: white; border-color: var(--orange); font-weight: 600; }
+  .tab.tab-add-cat { border-style: dashed; color: var(--muted); font-size: 11px; }
+  .tab.tab-add-cat:hover { border-color: var(--navy); color: var(--navy); background: var(--bg); }
 
   .btn-add {
     padding: 8px 18px; background: var(--orange); color: white; border: none;
@@ -169,11 +171,28 @@
   .section { margin-bottom: 18px; }
   .section-title {
     font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--orange); margin-bottom: 10px;
-    padding-bottom: 5px; border-bottom: 1.5px solid var(--orange-lt);
+    margin-bottom: 10px;
+    padding-bottom: 5px; border-bottom: 1.5px solid var(--border);
     display: flex; align-items: center; gap: 6px;
   }
-  .section-title::before { content: ''; display: block; width: 3px; height: 12px; background: var(--orange); border-radius: 2px; }
+  .section-title::before { content: ''; display: block; width: 3px; height: 12px; border-radius: 2px; }
+
+  /* Section colour variants */
+  .section-info .section-title { color: #0a7a8e; border-color: #d0f0f5; }
+  .section-info .section-title::before { background: #0fb8c2; }
+  .section-info { background: #f5fdfe; border-radius: 10px; padding: 14px 14px 4px; margin-bottom: 18px; border: 1px solid #d6eef0; }
+
+  .section-contacts .section-title { color: #6b3fa0; border-color: #e8d8f8; }
+  .section-contacts .section-title::before { background: #9b59d0; }
+  .section-contacts { background: #faf5ff; border-radius: 10px; padding: 14px 14px 4px; margin-bottom: 18px; border: 1px solid #e8d8f8; }
+  .section-contacts .contact-card { background: white; border-color: #e8d8f8; border-left-color: #9b59d0; }
+  .section-contacts .btn-add-contact { border-color: #d4b0f0; color: #6b3fa0; }
+  .section-contacts .btn-add-contact:hover { border-color: #9b59d0; background: #f5eeff; }
+  .section-contacts .cc-label { color: #6b3fa0; }
+
+  .section-notes .section-title { color: #8a5200; border-color: #fde8b0; }
+  .section-notes .section-title::before { background: #f0a500; }
+  .section-notes { background: #fffbf0; border-radius: 10px; padding: 14px 14px 14px; margin-bottom: 18px; border: 1px solid #fde8b0; }
 
   .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .edit-grid .full { grid-column: 1/-1; }
@@ -285,15 +304,8 @@
     <span class="search-icon">🔍</span>
     <input type="text" id="searchInput" placeholder="Caută după nume, email, telefon, note, context…">
   </div>
-  <div class="filter-tabs">
-    <button class="tab active" data-filter="all">Toți</button>
-    <button class="tab" data-filter="Liceu">Licee</button>
-    <button class="tab" data-filter="ONG">ONG-uri</button>
-    <button class="tab" data-filter="Centru">Centre</button>
-    <button class="tab" data-filter="Școală">Școli</button>
-    <button class="tab" data-filter="Partener">Parteneri</button>
-    <button class="tab" data-filter="Media">Media</button>
-    <button class="tab" data-filter="Inspectorat">Inspectorat</button>
+  <div class="filter-tabs" id="filterTabs">
+    <!-- rendered dynamically by renderFilterTabs() -->
   </div>
   <button class="btn-add" onclick="openAddModal()">+ Adaugă</button>
 </div>
@@ -331,10 +343,7 @@
       <div class="fg full"><label>Nume instituție *</label><input class="fi" id="f-name" placeholder="ex: Colegiul Național…"></div>
       <div class="fg">
         <label>Categorie</label>
-        <select class="fi" id="f-category">
-          <option>Liceu</option><option>Școală</option><option>Centru</option>
-          <option>ONG</option><option>Partener</option><option>Media</option><option>Inspectorat</option>
-        </select>
+        <select class="fi" id="f-category"></select>
       </div>
       <div class="fg"><label>Website</label><input class="fi" id="f-website" placeholder="exemplu.ro"></div>
       <div class="fg"><label>Email principal</label><input class="fi" id="f-email" type="email" placeholder="office@..."></div>
@@ -353,7 +362,7 @@
       <div class="fg"><label>Rol</label><input class="fi" id="f-crole" placeholder="director, profă…"></div>
       <div class="fg"><label>Telefon</label><input class="fi" id="f-cphone" placeholder="+40 7xx xxx xxx"></div>
       <div class="fg"><label>Email</label><input class="fi" id="f-cemail" type="email" placeholder="persoana@..."></div>
-      <div class="fg full"><label>Relație cu iEL (cine din echipă a comunicat)</label><input class="fi" id="f-crel" placeholder="ex: Adina, Vlad, Tim…"></div>
+      <div class="fg full"><label>Relație cu iEL (cine din echipă a comunicat)</label><input class="fi" id="f-crel" list="ielTeamList" placeholder="ex: Adina, Vlad, Tim…"></div>
 
       <div class="section-divider">Note</div>
       <div class="fg full"><textarea class="fi notes-field" id="f-notes" style="min-height:65px" placeholder="Observații, follow-up-uri…"></textarea></div>
@@ -366,9 +375,85 @@
 </div>
 
 <script>
-const CATS = ['Liceu','Școală','Centru','ONG','Partener','Media','Inspectorat'];
+const DEFAULT_CATS = ['Liceu','Școală','Centru','ONG','Partener','Media','Inspectorat'];
+const CAT_COLORS = {
+  Liceu:      { bg:'#e0f5f8', t:'#0a7a8e' },
+  ONG:        { bg:'#e6f6ee', t:'#1b6b42' },
+  Centru:     { bg:'#fff0f0', t:'#b53040' },
+  Media:      { bg:'#fff4e0', t:'#8a5200' },
+  Inspectorat:{ bg:'#ffe8ea', t:'#c0172a' },
+  Partener:   { bg:'#eafafb', t:'#0a6a7a' },
+  'Școală':   { bg:'#f0fde8', t:'#3a7a1b' },
+};
+const PALETTE = [
+  { bg:'#f0e8ff', t:'#5a1fa0' },{ bg:'#fde8ff', t:'#8a0a8e' },
+  { bg:'#e8f0ff', t:'#1a3a9a' },{ bg:'#fff8e0', t:'#7a5a00' },
+  { bg:'#ffe8f5', t:'#9a0a5a' },{ bg:'#e8ffe8', t:'#1a6a2a' },
+];
+let paletteIdx = 0;
+
+function getCats() {
+  const custom = partners.map(p=>p.category).filter(c=>!DEFAULT_CATS.includes(c));
+  return [...DEFAULT_CATS, ...[...new Set(custom)]];
+}
+
+function getCatStyle(cat) {
+  if (CAT_COLORS[cat]) return CAT_COLORS[cat];
+  if (!CAT_COLORS[cat]) {
+    // assign a stable color based on first time seen
+    const allCustom = [...new Set(partners.map(p=>p.category).filter(c=>!DEFAULT_CATS.includes(c)))];
+    const idx = allCustom.indexOf(cat) % PALETTE.length;
+    return PALETTE[idx >= 0 ? idx : 0];
+  }
+}
+
 function getCatClass(cat) {
-  return 'cat-' + ({Liceu:'liceu',ONG:'ong',Centru:'centru',Media:'media',Inspectorat:'inspector',Partener:'partener','Școală':'scoala'}[cat]||'partener');
+  // Keep class-based for known cats, inline style for custom
+  return 'cat-' + ({Liceu:'liceu',ONG:'ong',Centru:'centru',Media:'media',Inspectorat:'inspector',Partener:'partener','Școală':'scoala'}[cat]||'custom');
+}
+
+function catBadge(cat) {
+  const known = {Liceu:'liceu',ONG:'ong',Centru:'centru',Media:'media',Inspectorat:'inspector',Partener:'partener','Școală':'scoala'};
+  if (known[cat]) return `<span class="cat-badge cat-${known[cat]}">${esc(cat)}</span>`;
+  const s = getCatStyle(cat);
+  return `<span class="cat-badge" style="background:${s.bg};color:${s.t}">${esc(cat)}</span>`;
+}
+
+function renderFilterTabs() {
+  const cats = getCats();
+  const tabsEl = document.getElementById('filterTabs');
+  tabsEl.innerHTML = `<button class="tab ${filter==='all'?'active':''}" data-filter="all">Toți</button>`
+    + cats.map(c => `<button class="tab ${filter===c?'active':''}" data-filter="${esc(c)}">${esc(c==='Liceu'?'Licee':c==='ONG'?'ONG-uri':c==='Centru'?'Centre':c==='Școală'?'Școli':c==='Partener'?'Parteneri':c)}</button>`).join('')
+    + `<button class="tab tab-add-cat" onclick="promptAddCategory()" title="Adaugă categorie nouă">＋ Categorie</button>`;
+  tabsEl.querySelectorAll('.tab:not(.tab-add-cat)').forEach(t => t.addEventListener('click', ()=>{
+    filter = t.dataset.filter; renderFilterTabs(); render();
+  }));
+}
+
+function promptAddCategory() {
+  const name = prompt('Nume categorie nouă:');
+  if (!name || !name.trim()) return;
+  const trimmed = name.trim();
+  if (getCats().includes(trimmed)) { alert('Categoria există deja.'); return; }
+  // Category will appear once a partner is assigned to it
+  // For now just pre-select it in the add modal
+  const sel = document.getElementById('f-category');
+  if (sel) {
+    const opt = document.createElement('option');
+    opt.value = trimmed; opt.textContent = trimmed; opt.selected = true;
+    sel.appendChild(opt);
+    alert(`Categoria "${trimmed}" a fost adăugată. Salvează un partener cu această categorie pentru a o activa.`);
+  }
+}
+
+function catOpts(cur) {
+  return getCats().map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join('');
+}
+
+const IEL_TEAM = ['Vlad','Vera','Tim','Mara','Remus','Ioana','Ana'];
+
+function teamDatalist() {
+  return `<datalist id="ielTeamList">${IEL_TEAM.map(n=>`<option value="${n}">`).join('')}</datalist>`;
 }
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -459,6 +544,7 @@ function sortBy(f) {
 }
 
 function render() {
+  renderFilterTabs();
   document.getElementById('totalCount').textContent = partners.length;
   document.getElementById('liceeCount').textContent = partners.filter(p=>p.category==='Liceu').length;
   document.getElementById('ongCount').textContent = partners.filter(p=>['ONG','Partener'].includes(p.category)).length;
@@ -519,20 +605,21 @@ function renderDetail(p) {
         <div class="fg full"><label>Rol</label><input class="fi" value="${esc(c.role||'')}" onchange="upC(${p.id},${i},'role',this.value)"></div>
         <div class="fg"><label>Telefon</label><input class="fi" value="${esc(c.phone||'')}" onchange="upC(${p.id},${i},'phone',this.value)"></div>
         <div class="fg"><label>Email</label><input class="fi" value="${esc(c.email||'')}" onchange="upC(${p.id},${i},'email',this.value)"></div>
-        <div class="fg full"><label>Relație cu iEL (cine din echipă a comunicat)</label><input class="fi" value="${esc(c.ielRelation||'')}" placeholder="ex: Adina, Vlad, Tim…" onchange="upC(${p.id},${i},'ielRelation',this.value)"></div>
+        <div class="fg full"><label>Relație cu iEL (cine din echipă a comunicat)</label><input class="fi" list="ielTeamList" value="${esc(c.ielRelation||'')}" placeholder="ex: Adina, Vlad, Tim…" onchange="upC(${p.id},${i},'ielRelation',this.value)"></div>
       </div>
     </div>`).join('');
 
   document.getElementById('detailInner').innerHTML = `
+    ${teamDatalist()}
     <div class="detail-header">
       <div>
         <div class="detail-title">${esc(p.name)}</div>
-        <div class="detail-cat"><span class="cat-badge ${getCatClass(p.category)}">${esc(p.category)}</span></div>
+        <div class="detail-cat">${catBadge(p.category)}</div>
       </div>
       <button class="btn-close" onclick="closeDetail()">✕</button>
     </div>
 
-    <div class="section">
+    <div class="section section-info">
       <div class="section-title">Informații generale</div>
       <div class="edit-grid">
         <div class="fg full"><label>Nume instituție</label><input class="fi" id="e-name" value="${esc(p.name)}"></div>
@@ -551,13 +638,13 @@ function renderDetail(p) {
       </div>
     </div>
 
-    <div class="section">
+    <div class="section section-contacts">
       <div class="section-title">Persoane de contact (${(p.contacts||[]).length})</div>
       ${contactsHtml}
       <button class="btn-add-contact" onclick="addContact(${p.id})">+ Adaugă persoană de contact</button>
     </div>
 
-    <div class="section">
+    <div class="section section-notes">
       <div class="section-title">Note & observații</div>
       <textarea class="fi notes-field" id="e-notes" style="width:100%;min-height:90px">${esc(p.notes||'')}</textarea>
     </div>
@@ -584,7 +671,7 @@ function saveDetail(id) {
   const fl = document.getElementById('fl');
   fl.classList.add('show'); setTimeout(()=>fl.classList.remove('show'), 2000);
   document.querySelector('.detail-title').textContent = p.name;
-  document.querySelector('.detail-cat').innerHTML = `<span class="cat-badge ${getCatClass(p.category)}">${esc(p.category)}</span>`;
+  document.querySelector('.detail-cat').innerHTML = catBadge(p.category);
   render();
 }
 
@@ -607,7 +694,28 @@ function delPartner(id) {
   partners=partners.filter(x=>x.id!==id); closeDetail();
 }
 
-function openAddModal() { document.getElementById('addModal').classList.add('open'); }
+function openAddModal() {
+  // populate category dropdown dynamically
+  const sel = document.getElementById('f-category');
+  sel.innerHTML = getCats().map(c=>`<option>${c}</option>`).join('')
+    + `<option value="__new__">＋ Nova categorie…</option>`;
+  sel.onchange = function() {
+    if (this.value === '__new__') {
+      const name = prompt('Nume categorie nouă:');
+      if (name && name.trim()) {
+        const opt = document.createElement('option');
+        opt.value = name.trim(); opt.textContent = name.trim(); opt.selected = true;
+        this.insertBefore(opt, this.lastElementChild);
+        this.value = name.trim();
+      } else { this.value = getCats()[0]; }
+    }
+  };
+  // inject datalist if not present
+  if (!document.getElementById('ielTeamList')) {
+    document.body.insertAdjacentHTML('beforeend', teamDatalist());
+  }
+  document.getElementById('addModal').classList.add('open');
+}
 function closeModal() {
   document.getElementById('addModal').classList.remove('open');
   ['f-name','f-website','f-email','f-phone','f-address','f-context','f-cname','f-crole','f-cphone','f-cemail','f-crel','f-notes']
@@ -640,10 +748,6 @@ function saveNewPartner() {
 }
 document.getElementById('addModal').addEventListener('click', e=>{ if(e.target===document.getElementById('addModal')) closeModal(); });
 
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', ()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  t.classList.add('active'); filter=t.dataset.filter; render();
-}));
 document.getElementById('searchInput').addEventListener('input', e=>{ search=e.target.value; render(); });
 
 // ── BACKEND SYNC ──
