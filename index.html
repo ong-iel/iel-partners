@@ -81,8 +81,7 @@
   }
   .tab:hover { border-color: var(--orange); color: var(--orange); }
   .tab.active { background: var(--orange); color: white; border-color: var(--orange); font-weight: 600; }
-  .tab.tab-add-cat { border-style: dashed; color: var(--muted); font-size: 11px; }
-  .tab.tab-add-cat:hover { border-color: var(--navy); color: var(--navy); background: var(--bg); }
+
 
   .btn-add {
     padding: 8px 18px; background: var(--orange); color: white; border: none;
@@ -406,13 +405,13 @@
 </div>
 
 <script>
-const DEFAULT_CATS = ['Liceu','Școală','Centru','ONG','Partener','Media','Inspectorat'];
+const DEFAULT_CATS = ['Liceu','Școală','Centru','ONG','Partener','Media','Instituție Publică'];
 const CAT_COLORS = {
   Liceu:      { bg:'#e0f5f8', t:'#0a7a8e' },
   ONG:        { bg:'#e6f6ee', t:'#1b6b42' },
   Centru:     { bg:'#fff0f0', t:'#b53040' },
   Media:      { bg:'#fff4e0', t:'#8a5200' },
-  Inspectorat:{ bg:'#ffe8ea', t:'#c0172a' },
+  'Instituție Publică':{ bg:'#ffe8ea', t:'#c0172a' },
   Partener:   { bg:'#eafafb', t:'#0a6a7a' },
   'Școală':   { bg:'#f0fde8', t:'#3a7a1b' },
 };
@@ -440,11 +439,11 @@ function getCatStyle(cat) {
 
 function getCatClass(cat) {
   // Keep class-based for known cats, inline style for custom
-  return 'cat-' + ({Liceu:'liceu',ONG:'ong',Centru:'centru',Media:'media',Inspectorat:'inspector',Partener:'partener','Școală':'scoala'}[cat]||'custom');
+  return 'cat-' + ({Liceu:'liceu',ONG:'ong',Centru:'centru',Media:'media','Instituție Publică':'inspector',Partener:'partener','Școală':'scoala'}[cat]||'custom');
 }
 
 function catBadge(cat) {
-  const known = {Liceu:'liceu',ONG:'ong',Centru:'centru',Media:'media',Inspectorat:'inspector',Partener:'partener','Școală':'scoala'};
+  const known = {Liceu:'liceu',ONG:'ong',Centru:'centru',Media:'media','Instituție Publică':'inspector',Partener:'partener','Școală':'scoala'};
   if (known[cat]) return `<span class="cat-badge cat-${known[cat]}">${esc(cat)}</span>`;
   const s = getCatStyle(cat);
   return `<span class="cat-badge" style="background:${s.bg};color:${s.t}">${esc(cat)}</span>`;
@@ -455,8 +454,8 @@ function renderFilterTabs() {
   const tabsEl = document.getElementById('filterTabs');
   tabsEl.innerHTML = `<button class="tab ${filter==='all'?'active':''}" data-filter="all">Toți</button>`
     + cats.map(c => `<button class="tab ${filter===c?'active':''}" data-filter="${esc(c)}">${esc(c==='Liceu'?'Licee':c==='ONG'?'ONG-uri':c==='Centru'?'Centre':c==='Școală'?'Școli':c==='Partener'?'Parteneri':c)}</button>`).join('')
-    + `<button class="tab tab-add-cat" onclick="promptAddCategory()" title="Adaugă categorie nouă">＋ Categorie</button>`;
-  tabsEl.querySelectorAll('.tab:not(.tab-add-cat)').forEach(t => t.addEventListener('click', ()=>{
+;
+  tabsEl.querySelectorAll('.tab').forEach(t => t.addEventListener('click', ()=>{
     filter = t.dataset.filter; subfilter = 'all'; renderFilterTabs(); render();
   }));
 }
@@ -490,7 +489,7 @@ function teamDatalist() {
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 let partners = [
-  {id:1, name:'Inspectoratul Școlar Județean Brașov', category:'Inspectorat', website:'', email:'', phone:'', address:'Brașov', context:'', contractSigned:false, contacts:[{name:'Silviana Cioceanu', role:'Inspector', phone:'+40 723 611 189', email:'', ielRelation:''}], notes:'Contact principal pentru accesul în licee.'},
+  {id:1, name:'Inspectoratul Școlar Județean Brașov', category:'Instituție Publică', website:'', email:'', phone:'', address:'Brașov', context:'', contractSigned:false, contacts:[{name:'Silviana Cioceanu', role:'Inspector', phone:'+40 723 611 189', email:'', ielRelation:''}], notes:'Contact principal pentru accesul în licee.'},
   {id:2, name:'Colegiul Național "Andrei Șaguna"', category:'Liceu', website:'saguna.ro', email:'saguna.brasov@yahoo.com', phone:'0268 419 400', address:'Brașov', context:'', contractSigned:false, contacts:[{name:'Carmina Vakulovski', role:'Contact Tim', phone:'+40 722 630 672', email:'carmina.vakulovski@saguna.ro', ielRelation:'Tim'}], notes:'Contact de la Tim.'},
   {id:3, name:'Colegiul Național "Dr. Ioan Meșotă"', category:'Liceu', website:'mesota.ro', email:'colegiul_mesota@yahoo.com', phone:'0268 543 455', address:'Brașov', context:'', contractSigned:false, contacts:[], notes:''},
   {id:4, name:'Colegiul Național "Unirea"', category:'Liceu', website:'cnunirea.ro', email:'cnunirea@yahoo.com', phone:'0268 474 722', address:'Brașov', context:'', contractSigned:false, contacts:[], notes:''},
@@ -607,6 +606,23 @@ function renderSubTabs() {
   }));
 }
 
+function handleCatSelect(sel, id) {
+  if (sel.value === '__new__') {
+    const name = prompt('Nume categorie nouă:');
+    if (name && name.trim()) {
+      const trimmed = name.trim();
+      if (!getCats().includes(trimmed)) {
+        const opt = document.createElement('option');
+        opt.value = trimmed; opt.textContent = trimmed;
+        sel.insertBefore(opt, sel.lastElementChild); // before __new__
+      }
+      sel.value = trimmed;
+    } else {
+      sel.value = sel.options[0].value; // revert
+    }
+  }
+}
+
 function render() {
   renderFilterTabs();
   renderSubTabs();
@@ -657,7 +673,10 @@ function closeDetail() {
   render();
 }
 
-function catOpts(cur) { return getCats().map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join(''); }
+function catOpts(cur) {
+  return getCats().map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join('')
+    + `<option value="__new__" ${cur==='__new__'?'selected':''}>＋ Categorie nouă…</option>`;
+}
 
 function renderDetail(p) {
   const contactsHtml = (p.contacts||[]).map((c,i)=>`
@@ -689,9 +708,12 @@ function renderDetail(p) {
       <div class="section-title">Informații generale</div>
       <div class="edit-grid">
         <div class="fg full"><label>Nume instituție</label><input class="fi" id="e-name" value="${esc(p.name)}"></div>
-        <div class="fg"><label>Categorie</label><select class="fi" id="e-cat">${catOpts(p.category)}</select></div>
+        <div class="fg"><label>Categorie</label><select class="fi" id="e-cat" onchange="handleCatSelect(this,'e-cat')">${catOpts(p.category)}</select></div>
         <div class="fg"><label>Subcategorie <span style="color:var(--muted);font-weight:400">(opțional)</span></label><input class="fi" id="e-subcat" value="${esc(p.subcategory||'')}" placeholder="ex: liceu teoretic, ONG internațional…"></div>
         <div class="fg"><label>Website</label><input class="fi" id="e-web" value="${esc(p.website||'')}"></div>
+        <div class="fg"><label>Facebook</label><input class="fi" id="e-facebook" value="${esc(p.facebook||'')}" placeholder="facebook.com/..."></div>
+        <div class="fg"><label>Instagram</label><input class="fi" id="e-instagram" value="${esc(p.instagram||'')}" placeholder="instagram.com/..."></div>
+        <div class="fg"><label>LinkedIn</label><input class="fi" id="e-linkedin" value="${esc(p.linkedin||'')}" placeholder="linkedin.com/..."></div>
         <div class="fg"><label>Email principal</label><input class="fi" id="e-email" value="${esc(p.email||'')}"></div>
         <div class="fg"><label>Telefon</label><input class="fi" id="e-phone" value="${esc(p.phone||'')}"></div>
         <div class="fg"><label>Adresă / Oraș</label><input class="fi" id="e-address" value="${esc(p.address||'')}" placeholder="ex: Brașov, Str. Lungă 10"></div>
@@ -742,7 +764,10 @@ function saveDetail(id) {
   p.name    = document.getElementById('e-name').value.trim() || p.name;
   p.category= document.getElementById('e-cat').value;
   p.subcategory = document.getElementById('e-subcat').value.trim();
-  p.website = document.getElementById('e-web').value.trim();
+  p.website  = document.getElementById('e-web').value.trim();
+  p.facebook = document.getElementById('e-facebook').value.trim();
+  p.instagram= document.getElementById('e-instagram').value.trim();
+  p.linkedin = document.getElementById('e-linkedin').value.trim();
   p.email   = document.getElementById('e-email').value.trim();
   p.phone   = document.getElementById('e-phone').value.trim();
   p.address = document.getElementById('e-address').value.trim();
