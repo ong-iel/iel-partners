@@ -595,7 +595,7 @@ function render() {
       <td><div class="partner-name">${esc(p.name)}
         <small>${p.website?esc(p.website):'—'}${cityShort ? ` · <span class="city-chip">${esc(cityShort)}</span>` : ''}</small>
       </div></td>
-      <td><span class="cat-badge ${getCatClass(p.category)}">${esc(p.category)}</span></td>
+      <td><span class="cat-badge ${getCatClass(p.category)}">${esc(p.category)}</span>${p.subcategory?`<div style="font-size:10px;color:var(--muted);margin-top:3px;font-weight:500">${esc(p.subcategory)}</div>`:''}</td>
       <td>${contactHtml}</td>
       <td class="contact-mini" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">${p.email?esc(p.email):'—'}</td>
       <td class="star-col">${starDisplay(p.rating||0)}</td>
@@ -644,7 +644,7 @@ function renderDetail(p) {
     <div class="detail-header">
       <div>
         <div class="detail-title">${esc(p.name)}</div>
-        <div class="detail-cat">${catBadge(p.category)}</div>
+        <div class="detail-cat">${catBadge(p.category)}${p.subcategory?`<span style='font-size:11px;color:var(--muted);font-weight:500;margin-left:6px'>${esc(p.subcategory)}</span>`:''}</div>
       </div>
       <button class="btn-close" onclick="closeDetail()">✕</button>
     </div>
@@ -654,6 +654,7 @@ function renderDetail(p) {
       <div class="edit-grid">
         <div class="fg full"><label>Nume instituție</label><input class="fi" id="e-name" value="${esc(p.name)}"></div>
         <div class="fg"><label>Categorie</label><select class="fi" id="e-cat">${catOpts(p.category)}</select></div>
+        <div class="fg"><label>Subcategorie <span style="color:var(--muted);font-weight:400">(opțional)</span></label><input class="fi" id="e-subcat" value="${esc(p.subcategory||'')}" placeholder="ex: liceu teoretic, ONG internațional…"></div>
         <div class="fg"><label>Website</label><input class="fi" id="e-web" value="${esc(p.website||'')}"></div>
         <div class="fg"><label>Email principal</label><input class="fi" id="e-email" value="${esc(p.email||'')}"></div>
         <div class="fg"><label>Telefon</label><input class="fi" id="e-phone" value="${esc(p.phone||'')}"></div>
@@ -704,6 +705,7 @@ function saveDetail(id) {
   if (!p) return;
   p.name    = document.getElementById('e-name').value.trim() || p.name;
   p.category= document.getElementById('e-cat').value;
+  p.subcategory = document.getElementById('e-subcat').value.trim();
   p.website = document.getElementById('e-web').value.trim();
   p.email   = document.getElementById('e-email').value.trim();
   p.phone   = document.getElementById('e-phone').value.trim();
