@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parteneri iEL – Bază de Date</title>
+<title>iEL Partners – Database</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Poppins:ital@1&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -320,12 +320,12 @@
 <header>
   <div class="logo-area">
     <div class="logo-pill">iEL</div>
-    <div class="logo-text">Parteneri <span>&amp;</span> Contacte</div>
+    <div class="logo-text">Partners <span>&amp;</span> Contacts</div>
   </div>
   <div class="header-stats">
     <div class="stat"><div class="stat-number" id="totalCount">0</div><div class="stat-label">Total</div></div>
-    <div class="stat"><div class="stat-number" id="liceeCount">0</div><div class="stat-label">Licee</div></div>
-    <div class="stat"><div class="stat-number" id="ongCount">0</div><div class="stat-label">ONG / Parteneri</div></div>
+    <div class="stat"><div class="stat-number" id="liceeCount">0</div><div class="stat-label">High Schools</div></div>
+    <div class="stat"><div class="stat-number" id="ongCount">0</div><div class="stat-label">NGO / Partners</div></div>
     <span class="sync-status" id="syncStatus"></span>
   </div>
 </header>
@@ -333,12 +333,12 @@
 <div class="toolbar">
   <div class="search-wrap">
     <span class="search-icon">🔍</span>
-    <input type="text" id="searchInput" placeholder="Caută după nume, email, telefon, note, context…">
+    <input type="text" id="searchInput" placeholder="Search by name, email, phone, notes, context…">
   </div>
   <div class="filter-tabs" id="filterTabs">
     <!-- rendered dynamically by renderFilterTabs() -->
   </div>
-  <button class="btn-add" onclick="openAddModal()">+ Adaugă</button>
+  <button class="btn-add" onclick="openAddModal()">+ Add</button>
 </div>
 
 <div id="subtabBar" style="display:none"></div>
@@ -347,9 +347,9 @@
     <table>
       <thead>
         <tr>
-          <th onclick="sortBy('name')" id="th-name">Instituție</th>
-          <th onclick="sortBy('category')" id="th-category">Tip</th>
-          <th>Contact principal</th>
+          <th onclick="sortBy('name')" id="th-name">Institution</th>
+          <th onclick="sortBy('category')" id="th-category">Type</th>
+          <th>Primary Contact</th>
           <th>Email</th>
           <th>Rating</th>
           <th></th>
@@ -357,7 +357,7 @@
       </thead>
       <tbody id="tableBody"></tbody>
     </table>
-    <div id="noResults" class="no-results" style="display:none">Niciun rezultat găsit.</div>
+    <div id="noResults" class="no-results" style="display:none">No results found.</div>
   </div>
 
   <div class="detail-panel" id="detailPanel">
@@ -369,40 +369,40 @@
 <div class="modal-overlay" id="addModal">
   <div class="modal">
     <div class="modal-header">
-      <h2>Adaugă partener nou</h2>
+      <h2>Add new partner</h2>
       <span class="badge">iEL</span>
     </div>
     <div class="mg">
-      <div class="fg full"><label>Nume instituție *</label><input class="fi" id="f-name" placeholder="ex: Colegiul Național…"></div>
+      <div class="fg full"><label>Institution name *</label><input class="fi" id="f-name" placeholder="e.g. Colegiul Național…"></div>
       <div class="fg">
-        <label>Categorie</label>
+        <label>Category</label>
         <select class="fi" id="f-category"></select>
       </div>
-      <div class="fg"><label>Website</label><input class="fi" id="f-website" placeholder="exemplu.ro"></div>
-      <div class="fg"><label>Email principal</label><input class="fi" id="f-email" type="email" placeholder="office@..."></div>
-      <div class="fg"><label>Telefon</label><input class="fi" id="f-phone" placeholder="0268 000 000"></div>
-      <div class="fg"><label>Adresă / Oraș</label><input class="fi" id="f-address" placeholder="ex: Brașov"></div>
-      <div class="fg full"><label>Context colaborare iEL</label><textarea class="fi" id="f-context" style="min-height:60px" placeholder="ex: Human Library 2024, Erasmus+ proiect…"></textarea></div>
+      <div class="fg"><label>Website</label><input class="fi" id="f-website" placeholder="example.ro"></div>
+      <div class="fg"><label>Primary email</label><input class="fi" id="f-email" type="email" placeholder="office@..."></div>
+      <div class="fg"><label>Phone</label><input class="fi" id="f-phone" placeholder="0268 000 000"></div>
+      <div class="fg"><label>Address / City</label><input class="fi" id="f-address" placeholder="e.g. Brașov"></div>
+      <div class="fg full"><label>iEL collaboration context</label><textarea class="fi" id="f-context" style="min-height:60px" placeholder="e.g. Human Library 2024, Erasmus+ project…"></textarea></div>
       <div class="fg full">
         <label class="checkbox-row">
           <input type="checkbox" id="f-contract">
-          <span>Contract de parteneriat semnat</span>
+          <span>Partnership contract signed</span>
         </label>
       </div>
 
-      <div class="section-divider">Persoană de contact</div>
-      <div class="fg"><label>Nume</label><input class="fi" id="f-cname" placeholder="Prenume Nume"></div>
-      <div class="fg"><label>Rol</label><input class="fi" id="f-crole" placeholder="director, profă…"></div>
-      <div class="fg"><label>Telefon</label><input class="fi" id="f-cphone" placeholder="+40 7xx xxx xxx"></div>
-      <div class="fg"><label>Email</label><input class="fi" id="f-cemail" type="email" placeholder="persoana@..."></div>
-      <div class="fg full"><label>Relație cu iEL (cine din echipă a comunicat)</label><input class="fi" id="f-crel" placeholder="ex: Vera, Vlad, Tim…"></div>
+      <div class="section-divider">Contact person</div>
+      <div class="fg"><label>Name</label><input class="fi" id="f-cname" placeholder="First Last"></div>
+      <div class="fg"><label>Role</label><input class="fi" id="f-crole" placeholder="principal, teacher…"></div>
+      <div class="fg"><label>Phone</label><input class="fi" id="f-cphone" placeholder="+40 7xx xxx xxx"></div>
+      <div class="fg"><label>Email</label><input class="fi" id="f-cemail" type="email" placeholder="person@..."></div>
+      <div class="fg full"><label>Relationship with iEL (who from the team communicated)</label><input class="fi" id="f-crel" placeholder="e.g. Vera, Vlad, Tim…"></div>
 
-      <div class="section-divider">Note</div>
-      <div class="fg full"><textarea class="fi notes-field" id="f-notes" style="min-height:65px" placeholder="Observații, follow-up-uri…"></textarea></div>
+      <div class="section-divider">Notes</div>
+      <div class="fg full"><textarea class="fi notes-field" id="f-notes" style="min-height:65px" placeholder="Observations, follow-ups…"></textarea></div>
     </div>
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">Anulează</button>
-      <button class="btn-save" onclick="saveNewPartner()">Salvează partenerul</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveNewPartner()">Save partner</button>
     </div>
   </div>
 </div>
@@ -465,10 +465,11 @@ function catBadge(cat) {
 }
 
 function renderFilterTabs() {
-  const cats = getCats();
+  const usedCats = new Set(partners.map(p => p.category));
+  const cats = getCats().filter(c => usedCats.has(c));
   const tabsEl = document.getElementById('filterTabs');
-  tabsEl.innerHTML = `<button class="tab ${filter==='all'?'active':''}" data-filter="all">Toți</button>`
-    + cats.map(c => `<button class="tab ${filter===c?'active':''}" data-filter="${esc(c)}">${esc(c==='Liceu'?'Licee':c==='ONG'?'ONG-uri':c==='Centru'?'Centre':c==='Școală'?'Școli':c==='Partener'?'Parteneri':c)}</button>`).join('')
+  tabsEl.innerHTML = `<button class="tab ${filter==='all'?'active':''}" data-filter="all">All</button>`
+    + cats.map(c => `<button class="tab ${filter===c?'active':''}" data-filter="${esc(c)}">${esc(c==='Liceu'?'High Schools':c==='ONG'?'NGOs':c==='Centru'?'Centers':c==='Școală'?'Schools':c==='Partener'?'Partners':c)}</button>`).join('')
 ;
   tabsEl.querySelectorAll('.tab').forEach(t => t.addEventListener('click', ()=>{
     filter = t.dataset.filter; subfilter = 'all'; renderFilterTabs(); render();
@@ -476,10 +477,10 @@ function renderFilterTabs() {
 }
 
 function promptAddCategory() {
-  const name = prompt('Nume categorie nouă:');
+  const name = prompt('New category name:');
   if (!name || !name.trim()) return;
   const trimmed = name.trim();
-  if (getCats().includes(trimmed)) { alert('Categoria există deja.'); return; }
+  if (getCats().includes(trimmed)) { alert('This category already exists.'); return; }
   openAddModal();
   const sel = document.getElementById('f-category');
   if (sel) {
@@ -743,7 +744,7 @@ function renderSubTabs() {
   if (!subs.length) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
   bar.style.display = 'block';
   bar.className = 'subtab-bar';
-  bar.innerHTML = `<button class="subtab ${subfilter==='all'?'active':''}" data-sub="all">Toate</button>`
+  bar.innerHTML = `<button class="subtab ${subfilter==='all'?'active':''}" data-sub="all">All</button>`
     + subs.map(s => `<button class="subtab ${subfilter===s?'active':''}" data-sub="${esc(s)}">${esc(s)}</button>`).join('');
   bar.querySelectorAll('.subtab').forEach(t => t.addEventListener('click', () => {
     subfilter = t.dataset.sub; renderSubTabs(); render();
@@ -795,7 +796,7 @@ function render() {
       <td>${contactHtml}</td>
       <td class="contact-mini" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">${p.email?esc(p.email):'—'}</td>
       <td class="star-col">${starDisplay(p.rating||0)}</td>
-      <td style="white-space:nowrap">${p.contractSigned?'<span title="Contract de parteneriat semnat">🤝</span>':''} ${hasNotes?'<span title="Note">🗒️</span>':''}</td>
+      <td style="white-space:nowrap">${p.contractSigned?'<span title="Partnership contract signed">🤝</span>':''} ${hasNotes?'<span title="Notes">🗒️</span>':''}</td>
     </tr>`;
   }).join('');
 }
@@ -819,7 +820,7 @@ function closeDetail() {
 
 function catOpts(cur) {
   return getCats().map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join('')
-    + `<option value="__new__" ${cur==='__new__'?'selected':''}>＋ Categorie nouă…</option>`;
+    + `<option value="__new__" ${cur==='__new__'?'selected':''}>＋ New category…</option>`;
 }
 
 function renderDetail(p) {
@@ -827,14 +828,14 @@ function renderDetail(p) {
     <div class="contact-card">
       <div class="cc-head">
         <span class="cc-label">Contact ${i+1}</span>
-        <button class="btn-rm" onclick="rmContact(${p.id},${i})" title="Șterge contact">✕</button>
+        <button class="btn-rm" onclick="rmContact(${p.id},${i})" title="Delete contact">✕</button>
       </div>
       <div class="cc-grid">
-        <div class="fg full"><label>Nume</label><input class="fi" value="${esc(c.name)}" onchange="upC(${p.id},${i},'name',this.value)"></div>
-        <div class="fg full"><label>Rol</label><input class="fi" value="${esc(c.role||'')}" onchange="upC(${p.id},${i},'role',this.value)"></div>
-        <div class="fg"><label>Telefon</label><input class="fi" value="${esc(c.phone||'')}" onchange="upC(${p.id},${i},'phone',this.value)"></div>
+        <div class="fg full"><label>Name</label><input class="fi" value="${esc(c.name)}" onchange="upC(${p.id},${i},'name',this.value)"></div>
+        <div class="fg full"><label>Role</label><input class="fi" value="${esc(c.role||'')}" onchange="upC(${p.id},${i},'role',this.value)"></div>
+        <div class="fg"><label>Phone</label><input class="fi" value="${esc(c.phone||'')}" onchange="upC(${p.id},${i},'phone',this.value)"></div>
         <div class="fg"><label>Email</label><input class="fi" value="${esc(c.email||'')}" onchange="upC(${p.id},${i},'email',this.value)"></div>
-        <div class="fg full"><label>Relație cu iEL (cine din echipă a comunicat)</label><input class="fi" value="${esc(c.ielRelation||'')}" placeholder="ex: Vera, Vlad, Tim…" onchange="upC(${p.id},${i},'ielRelation',this.value)"></div>
+        <div class="fg full"><label>Relationship with iEL (who from the team communicated)</label><input class="fi" value="${esc(c.ielRelation||'')}" placeholder="e.g. Vera, Vlad, Tim…" onchange="upC(${p.id},${i},'ielRelation',this.value)"></div>
       </div>
     </div>`).join('');
 
@@ -849,56 +850,56 @@ function renderDetail(p) {
     </div>
 
     <div class="section section-info">
-      <div class="section-title">Informații generale</div>
+      <div class="section-title">General information</div>
       <div class="edit-grid">
-        <div class="fg full"><label>Nume instituție</label><input class="fi" id="e-name" value="${esc(p.name)}"></div>
-        <div class="fg"><label>Categorie</label><select class="fi" id="e-cat" onchange="handleCatSelect(this,'e-cat')">${catOpts(p.category)}</select></div>
-        <div class="fg"><label>Subcategorie <span style="color:var(--muted);font-weight:400">(opțional)</span></label><input class="fi" id="e-subcat" value="${esc(p.subcategory||'')}" placeholder="ex: liceu teoretic, ONG internațional…"></div>
+        <div class="fg full"><label>Institution name</label><input class="fi" id="e-name" value="${esc(p.name)}"></div>
+        <div class="fg"><label>Category</label><select class="fi" id="e-cat" onchange="handleCatSelect(this,'e-cat')">${catOpts(p.category)}</select></div>
+        <div class="fg"><label>Subcategory <span style="color:var(--muted);font-weight:400">(optional)</span></label><input class="fi" id="e-subcat" value="${esc(p.subcategory||'')}" placeholder="e.g. theoretical high school, international NGO…"></div>
         <div class="fg"><label>Website</label><input class="fi" id="e-web" value="${esc(p.website||'')}"></div>
         <div class="fg"><label>Facebook</label><input class="fi" id="e-facebook" value="${esc(p.facebook||'')}" placeholder="facebook.com/..."></div>
         <div class="fg"><label>Instagram</label><input class="fi" id="e-instagram" value="${esc(p.instagram||'')}" placeholder="instagram.com/..."></div>
         <div class="fg"><label>LinkedIn</label><input class="fi" id="e-linkedin" value="${esc(p.linkedin||'')}" placeholder="linkedin.com/..."></div>
-        <div class="fg"><label>Email principal</label><input class="fi" id="e-email" value="${esc(p.email||'')}"></div>
-        <div class="fg"><label>Telefon</label><input class="fi" id="e-phone" value="${esc(p.phone||'')}"></div>
-        <div class="fg"><label>Adresă / Oraș</label><input class="fi" id="e-address" value="${esc(p.address||'')}" placeholder="ex: Brașov, Str. Lungă 10"></div>
-        <div class="fg full"><label>Context colaborare cu iEL</label><textarea class="fi" id="e-context" style="min-height:70px" placeholder="ex: Human Library 2024, Erasmus+ proiect, atelier…">${esc(p.context||'')}</textarea></div>
+        <div class="fg"><label>Primary email</label><input class="fi" id="e-email" value="${esc(p.email||'')}"></div>
+        <div class="fg"><label>Phone</label><input class="fi" id="e-phone" value="${esc(p.phone||'')}"></div>
+        <div class="fg"><label>Address / City</label><input class="fi" id="e-address" value="${esc(p.address||'')}" placeholder="e.g. Brașov, Str. Lungă 10"></div>
+        <div class="fg full"><label>Collaboration context with iEL</label><textarea class="fi" id="e-context" style="min-height:70px" placeholder="e.g. Human Library 2024, Erasmus+ project, workshop…">${esc(p.context||'')}</textarea></div>
         <div class="fg full">
           <label class="checkbox-row">
             <input type="checkbox" id="e-contract" ${p.contractSigned?'checked':''}>
-            <span>Contract de parteneriat semnat ${p.contractSigned?'<span class="contract-signed">🤝</span>':''}</span>
+            <span>Partnership contract signed ${p.contractSigned?'<span class="contract-signed">🤝</span>':''}</span>
           </label>
         </div>
         <div class="fg full">
-          <label>Link contract (Google Drive)</label>
+          <label>Contract link (Google Drive)</label>
           <div style="display:flex;gap:6px;align-items:center">
             <input class="fi" id="e-contract-link" value="${esc(p.contractLink||'')}" placeholder="https://drive.google.com/..." style="flex:1">
-            ${p.contractLink ? `<a href="${esc(p.contractLink)}" target="_blank" style="white-space:nowrap;font-size:12px;color:var(--navy);font-weight:600;text-decoration:none" title="Deschide în Drive">📂 Deschide</a>` : ''}
+            ${p.contractLink ? `<a href="${esc(p.contractLink)}" target="_blank" style="white-space:nowrap;font-size:12px;color:var(--navy);font-weight:600;text-decoration:none" title="Open in Drive">📂 Open</a>` : ''}
           </div>
         </div>
         <div class="fg full" style="margin-top:4px">
-          <label>Relație / Potențial</label>
+          <label>Relationship / Potential</label>
           <div class="star-rating" id="e-rating">
-            ${[1,2,3,4,5].map(i => `<span class="star${(p.rating||0)>=i?' on':''}" onclick="setRating(${p.id},${i})" title="${i} stele">★</span>`).join('')}
+            ${[1,2,3,4,5].map(i => `<span class="star${(p.rating||0)>=i?' on':''}" onclick="setRating(${p.id},${i})" title="${i} stars">★</span>`).join('')}
           </div>
         </div>
       </div>
     </div>
 
     <div class="section section-contacts">
-      <div class="section-title">Persoane de contact (${(p.contacts||[]).length})</div>
+      <div class="section-title">Contact persons (${(p.contacts||[]).length})</div>
       ${contactsHtml}
-      <button class="btn-add-contact" onclick="addContact(${p.id})">+ Adaugă persoană de contact</button>
+      <button class="btn-add-contact" onclick="addContact(${p.id})">+ Add contact person</button>
     </div>
 
     <div class="section section-notes">
-      <div class="section-title">Note & observații</div>
+      <div class="section-title">Notes & observations</div>
       <textarea class="fi notes-field" id="e-notes" style="width:100%;min-height:90px">${esc(p.notes||'')}</textarea>
     </div>
 
     <div class="action-row">
-      <button class="btn-save" onclick="saveDetail(${p.id})">💾 Salvează</button>
-      <span class="flash" id="fl">✓ Salvat!</span>
-      <button class="btn-delete" onclick="delPartner(${p.id})">🗑 Șterge</button>
+      <button class="btn-save" onclick="saveDetail(${p.id})">💾 Save</button>
+      <span class="flash" id="fl">✓ Saved!</span>
+      <button class="btn-delete" onclick="delPartner(${p.id})">🗑 Delete</button>
     </div>`;
 }
 
@@ -936,12 +937,12 @@ function addContact(pid) {
 
 function rmContact(pid,i) {
   const p=partners.find(x=>x.id===pid); if(!p) return;
-  if(!confirm('Ștergi această persoană de contact?')) return;
+  if(!confirm('Delete this contact person?')) return;
   p.contacts.splice(i,1); renderDetail(p);
 }
 
 function delPartner(id) {
-  if(!confirm('Ștergi definitiv acest partener?')) return;
+  if(!confirm('Permanently delete this partner?')) return;
   partners=partners.filter(x=>x.id!==id); closeDetail();
 }
 
@@ -952,7 +953,7 @@ function openAddModal() {
     + `<option value="__new__">＋ Nova categorie…</option>`;
   sel.onchange = function() {
     if (this.value === '__new__') {
-      const name = prompt('Nume categorie nouă:');
+      const name = prompt('New category name:');
       if (name && name.trim()) {
         const opt = document.createElement('option');
         opt.value = name.trim(); opt.textContent = name.trim(); opt.selected = true;
@@ -1066,7 +1067,7 @@ function triggerSave() {
 function showStatus(type) {
   const el = document.getElementById('syncStatus');
   el.className = 'sync-status ' + type;
-  el.textContent = type === 'loading' ? '⏳ Se încarcă…' : type === 'saving' ? '💾 Se salvează…' : type === 'saved' ? '✓ Salvat' : '⚠ Eroare la salvare';
+  el.textContent = type === 'loading' ? '⏳ Loading…' : type === 'saving' ? '💾 Saving…' : type === 'saved' ? '✓ Saved' : '⚠ Save error';
   el.style.display = 'inline-block';
 }
 function hideStatus() {
