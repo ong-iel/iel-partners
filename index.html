@@ -279,6 +279,20 @@
   .sync-status.saved   { background: rgba(255,255,255,0.2); color: white; }
   .sync-status.error   { background: #fe6167; color: white; }
 
+
+  /* ── STAR RATING ── */
+  .star-rating { display: inline-flex; gap: 2px; }
+  .star-rating .star {
+    cursor: pointer; font-size: 16px; line-height: 1;
+    color: #d6eef0; transition: color 0.1s;
+    user-select: none;
+  }
+  .star-rating .star.on { color: #f0a500; }
+  .star-rating .star:hover,
+  .star-rating:hover .star.on { color: #f0a500; }
+  .star-rating .star:hover ~ .star { color: #d6eef0 !important; }
+  .star-col { white-space: nowrap; }
+
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--orange-md); }
@@ -319,6 +333,7 @@
           <th onclick="sortBy('category')" id="th-category">Tip</th>
           <th>Contact principal</th>
           <th>Email</th>
+          <th>Rating</th>
           <th></th>
         </tr>
       </thead>
@@ -544,6 +559,19 @@ function sortBy(f) {
   render();
 }
 
+function starDisplay(r) {
+  if (!r) return '<span style="color:#d6eef0;font-size:14px">☆☆☆☆☆</span>';
+  return [1,2,3,4,5].map(i => `<span style="color:${r>=i?'#f0a500':'#d6eef0'};font-size:14px">★</span>`).join('');
+}
+
+function setRating(pid, val) {
+  const p = partners.find(x=>x.id===pid); if(!p) return;
+  p.rating = (p.rating===val) ? 0 : val; // click same star = clear
+  renderDetail(p);
+  render();
+  triggerSave();
+}
+
 function render() {
   renderFilterTabs();
   document.getElementById('totalCount').textContent = partners.length;
@@ -570,6 +598,7 @@ function render() {
       <td><span class="cat-badge ${getCatClass(p.category)}">${esc(p.category)}</span></td>
       <td>${contactHtml}</td>
       <td class="contact-mini" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">${p.email?esc(p.email):'—'}</td>
+      <td class="star-col">${starDisplay(p.rating||0)}</td>
       <td style="white-space:nowrap">${p.contractSigned?'<span title="Contract de parteneriat semnat">🤝</span>':''} ${hasNotes?'<span title="Note">📌</span>':''}</td>
     </tr>`;
   }).join('');
@@ -635,6 +664,12 @@ function renderDetail(p) {
             <input type="checkbox" id="e-contract" ${p.contractSigned?'checked':''}>
             <span>Contract de parteneriat semnat ${p.contractSigned?'<span class="contract-signed">🤝</span>':''}</span>
           </label>
+        </div>
+        <div class="fg full" style="margin-top:4px">
+          <label>Relație / Potențial</label>
+          <div class="star-rating" id="e-rating">
+            ${[1,2,3,4,5].map(i => `<span class="star${(p.rating||0)>=i?' on':''}" onclick="setRating(${p.id},${i})" title="${i} stele">★</span>`).join('')}
+          </div>
         </div>
       </div>
     </div>
