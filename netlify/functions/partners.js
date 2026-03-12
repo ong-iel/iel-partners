@@ -1,84 +1,69 @@
 const { google } = require('googleapis');
 
-// ── CONFIG ──────────────────────────────────────────────────────────────────
-// These values come from Netlify environment variables (never hardcode them!)
-const SHEET_ID    = process.env.GOOGLE_SHEET_ID;      // the long ID from the Sheet URL
-const CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL; // service account email
-const PRIVATE_KEY  = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
-const SHEET_TAB   = 'ParteneriDB';                    // name of the tab in your Sheet
+const SHEET_ID = process.env.GOOGLE_SHEET_ID;
+const SHEET_TAB = 'ParteneriDB';
+const CHUNK_SIZE = 40000; // safe chars per cell
 
-// ── AUTH ─────────────────────────────────────────────────────────────────────
-function getAuth() {
-  return new google.auth.JWT(CLIENT_EMAIL, null, PRIVATE_KEY, [
-    'https://www.googleapis.com/auth/spreadsheets'
-  ]);
-}
-
-// ── HELPERS ──────────────────────────────────────────────────────────────────
-// We store the entire partners array as a single JSON blob in cell A1 of the tab.
-// Simple, robust, and requires zero schema management.
-
-async function readPartners(sheets) {
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
-    range: `${SHEET_TAB}!A1`,
+async function getAuth() {
+  const auth = new google.auth.JWT({
+    email: process.env.GOOGLE_CLIENT_EMAIL,
+    key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
-  const raw = res.data.values?.[0]?.[0];
-  if (!raw) return [];
-  return JSON.parse(raw);
+  await auth.authorize();
+  return auth;
 }
 
-async function writePartners(sheets, partners) {
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: SHEET_ID,
-    range: `${SHEET_TAB}!A1`,
-    valueInputOption: 'RAW',
-    requestBody: { values: [[JSON.stringify(partners)]] },
-  });
-}
-
-// ── HANDLER ──────────────────────────────────────────────────────────────────
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Content-Type': 'application/json',
   };
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
-  // Preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
+  const auth = await getAuth();
+  const sheets = google.sheets({ version: 'v4', auth });
+
+  if (event.httpMethod === 'GET') {
+    // Read all rows from col A, concatenate, parse JSON
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_TAB}!A:A`,
+    });
+    const rows = res.data.values || [];
+    const fullJson = rows.map(r => r[0] || '').join('');
+    if (!fullJson) return { statusCode: 200, headers, body: JSON.stringify({ partners: [] }) };
+    const data = JSON.parse(fullJson);
+    return { statusCode: 200, headers, body: JSON.stringify(data) };
   }
 
-  try {
-    const auth   = getAuth();
-    const sheets = google.sheets({ version: 'v4', auth });
-
-    // ── GET: load all partners ──
-    if (event.httpMethod === 'GET') {
-      const partners = await readPartners(sheets);
-      return { statusCode: 200, headers, body: JSON.stringify({ partners }) };
+  if (event.httpMethod === 'POST') {
+    const body = JSON.parse(event.body);
+    const fullJson = JSON.stringify(body);
+    
+    // Split into chunks
+    const chunks = [];
+    for (let i = 0; i < fullJson.length; i += CHUNK_SIZE) {
+      chunks.push([fullJson.slice(i, i + CHUNK_SIZE)]);
     }
 
-    // ── POST: save all partners ──
-    if (event.httpMethod === 'POST') {
-      const { partners } = JSON.parse(event.body);
-      if (!Array.isArray(partners)) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid data' }) };
-      }
-      await writePartners(sheets, partners);
-      return { statusCode: 200, headers, body: JSON.stringify({ ok: true }) };
-    }
+    // Clear sheet first
+    await sheets.spreadsheets.values.clear({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_TAB}!A:A`,
+    });
 
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+    // Write chunks
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_TAB}!A1`,
+      valueInputOption: 'RAW',
+      requestBody: { values: chunks },
+    });
 
-  } catch (err) {
-    console.error('Function error:', err);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: err.message }),
-    };
+    return { statusCode: 200, headers, body: JSON.stringify({ ok: true, chunks: chunks.length }) };
   }
+
+  return { statusCode: 405, headers, body: 'Method not allowed' };
 };
