@@ -405,6 +405,12 @@
 </div>
 
 <script>
+function norm(s) {
+  return (s||'').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/ș/g,'s').replace(/ț/g,'t').replace(/ă/g,'a').replace(/â/g,'a').replace(/î/g,'i')
+    .replace(/Ș/g,'s').replace(/Ț/g,'t').replace(/Ă/g,'a').replace(/Â/g,'a').replace(/Î/g,'i');
+}
 const DEFAULT_CATS = ['Liceu','Școală','Centru','ONG','Partener','Media','Instituție Publică'];
 const CAT_COLORS = {
   Liceu:      { bg:'#e0f5f8', t:'#0a7a8e' },
@@ -485,12 +491,6 @@ const IEL_TEAM = ['Vlad','Vera','Tim','Mara','Remus','Ioana','Ana'];
 
 function teamDatalist() {
   return `<datalist id="ielTeamList">${IEL_TEAM.map(n=>`<option value="${n}">`).join('')}</datalist>`;
-}
-function norm(s) {
-  return (s||'').toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')  // strip diacritics
-    .replace(/ș/g,'s').replace(/ț/g,'t').replace(/ă/g,'a').replace(/â/g,'a').replace(/î/g,'i')
-    .replace(/Ș/g,'s').replace(/Ț/g,'t').replace(/Ă/g,'a').replace(/Â/g,'a').replace(/Î/g,'i');
 }
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
