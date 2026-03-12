@@ -409,10 +409,11 @@
 
 <script>
 function norm(s) {
-  return (s||'').toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/ș/g,'s').replace(/ț/g,'t').replace(/ă/g,'a').replace(/â/g,'a').replace(/î/g,'i')
-    .replace(/Ș/g,'s').replace(/Ț/g,'t').replace(/Ă/g,'a').replace(/Â/g,'a').replace(/Î/g,'i');
+  if (!s) return '';
+  return s.toLowerCase()
+    .split('').map(function(c) {
+      return {'ș':'s','ț':'t','ă':'a','â':'a','î':'i','Ș':'s','Ț':'t','ş':'s','ţ':'t'}[c] || c;
+    }).join('');
 }
 const DEFAULT_CATS = ['Liceu','Școală','Centru','ONG','Partener','Media','Instituție Publică'];
 const CAT_COLORS = {
