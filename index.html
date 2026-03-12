@@ -293,6 +293,21 @@
   .star-rating .star:hover ~ .star { color: #d6eef0 !important; }
   .star-col { white-space: nowrap; }
 
+
+  /* ── SUBCATEGORY SUB-TABS ── */
+  .subtab-bar {
+    background: white; border-bottom: 1px solid var(--border);
+    padding: 6px 40px; display: flex; gap: 5px; flex-wrap: wrap;
+    animation: rowIn 0.15s ease both;
+  }
+  .subtab {
+    padding: 4px 12px; border-radius: 20px; border: 1.5px solid var(--border);
+    background: white; font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; color: var(--muted); white-space: nowrap;
+  }
+  .subtab:hover { border-color: var(--navy); color: var(--navy); }
+  .subtab.active { background: var(--navy); color: white; border-color: var(--navy); font-weight: 600; }
+
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--orange-md); }
@@ -324,6 +339,7 @@
   <button class="btn-add" onclick="openAddModal()">+ Adaugă</button>
 </div>
 
+<div id="subtabBar" style="display:none"></div>
 <div class="main">
   <div class="table-panel" id="tablePanel">
     <table>
@@ -441,7 +457,7 @@ function renderFilterTabs() {
     + cats.map(c => `<button class="tab ${filter===c?'active':''}" data-filter="${esc(c)}">${esc(c==='Liceu'?'Licee':c==='ONG'?'ONG-uri':c==='Centru'?'Centre':c==='Școală'?'Școli':c==='Partener'?'Parteneri':c)}</button>`).join('')
     + `<button class="tab tab-add-cat" onclick="promptAddCategory()" title="Adaugă categorie nouă">＋ Categorie</button>`;
   tabsEl.querySelectorAll('.tab:not(.tab-add-cat)').forEach(t => t.addEventListener('click', ()=>{
-    filter = t.dataset.filter; renderFilterTabs(); render();
+    filter = t.dataset.filter; subfilter = 'all'; renderFilterTabs(); render();
   }));
 }
 
@@ -527,11 +543,12 @@ let partners = [
 ];
 
 let nextId = 51;
-let filter='all', search='', sortField='name', sortDir=1, selectedId=null;
+let filter='all', subfilter='all', search='', sortField='name', sortDir=1, selectedId=null;
 
 function filteredData() {
   let d = [...partners];
   if (filter !== 'all') d = d.filter(p => p.category === filter);
+  if (subfilter !== 'all') d = d.filter(p => (p.subcategory||'').trim() === subfilter);
   if (search) {
     const q = search.toLowerCase();
     d = d.filter(p =>
@@ -572,8 +589,27 @@ function setRating(pid, val) {
   triggerSave();
 }
 
+function renderSubTabs() {
+  const bar = document.getElementById('subtabBar');
+  if (filter === 'all') { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  // collect distinct non-empty subcategories for current category
+  const subs = [...new Set(
+    partners.filter(p => p.category === filter && (p.subcategory||'').trim())
+            .map(p => p.subcategory.trim())
+  )].sort((a,b) => a.localeCompare(b,'ro'));
+  if (!subs.length) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  bar.style.display = 'block';
+  bar.className = 'subtab-bar';
+  bar.innerHTML = `<button class="subtab ${subfilter==='all'?'active':''}" data-sub="all">Toate</button>`
+    + subs.map(s => `<button class="subtab ${subfilter===s?'active':''}" data-sub="${esc(s)}">${esc(s)}</button>`).join('');
+  bar.querySelectorAll('.subtab').forEach(t => t.addEventListener('click', () => {
+    subfilter = t.dataset.sub; renderSubTabs(); render();
+  }));
+}
+
 function render() {
   renderFilterTabs();
+  renderSubTabs();
   document.getElementById('totalCount').textContent = partners.length;
   document.getElementById('liceeCount').textContent = partners.filter(p=>p.category==='Liceu').length;
   document.getElementById('ongCount').textContent = partners.filter(p=>['ONG','Partener'].includes(p.category)).length;
