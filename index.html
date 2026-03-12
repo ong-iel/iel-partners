@@ -486,6 +486,12 @@ const IEL_TEAM = ['Vlad','Vera','Tim','Mara','Remus','Ioana','Ana'];
 function teamDatalist() {
   return `<datalist id="ielTeamList">${IEL_TEAM.map(n=>`<option value="${n}">`).join('')}</datalist>`;
 }
+function norm(s) {
+  return (s||'').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')  // strip diacritics
+    .replace(/ș/g,'s').replace(/ț/g,'t').replace(/ă/g,'a').replace(/â/g,'a').replace(/î/g,'i')
+    .replace(/Ș/g,'s').replace(/Ț/g,'t').replace(/Ă/g,'a').replace(/Â/g,'a').replace(/Î/g,'i');
+}
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 let partners = [
@@ -678,19 +684,19 @@ function filteredData() {
   if (filter !== 'all') d = d.filter(p => p.category === filter);
   if (subfilter !== 'all') d = d.filter(p => (p.subcategory||'').split(',').map(s=>s.trim()).includes(subfilter));
   if (search) {
-    const q = search.toLowerCase();
+    const q = norm(search);
     d = d.filter(p =>
-      p.name.toLowerCase().includes(q) ||
-      (p.email||'').toLowerCase().includes(q) ||
-      (p.phone||'').toLowerCase().includes(q) ||
-      (p.website||'').toLowerCase().includes(q) ||
-      (p.notes||'').toLowerCase().includes(q) ||
-      (p.context||'').toLowerCase().includes(q) ||
+      norm(p.name).includes(q) ||
+      norm(p.email).includes(q) ||
+      norm(p.phone).includes(q) ||
+      norm(p.website).includes(q) ||
+      norm(p.notes).includes(q) ||
+      norm(p.context).includes(q) ||
       (p.contacts||[]).some(c =>
-        c.name.toLowerCase().includes(q) ||
-        (c.phone||'').includes(q) ||
-        (c.email||'').toLowerCase().includes(q) ||
-        (c.ielRelation||'').toLowerCase().includes(q)
+        norm(c.name).includes(q) ||
+        norm(c.phone).includes(q) ||
+        norm(c.email).includes(q) ||
+        norm(c.ielRelation).includes(q)
       )
     );
   }
@@ -984,7 +990,17 @@ function saveNewPartner() {
 }
 document.getElementById('addModal').addEventListener('click', e=>{ if(e.target===document.getElementById('addModal')) closeModal(); });
 
-document.getElementById('searchInput').addEventListener('input', e=>{ search=e.target.value; render(); });
+document.getElementById('searchInput').addEventListener('input', e=>{
+  search = e.target.value;
+  document.getElementById('searchClear').style.display = search ? 'block' : 'none';
+  render();
+});
+function clearSearch() {
+  search = '';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchClear').style.display = 'none';
+  render();
+}
 
 // ── BACKEND SYNC ──
 let saveTimeout = null;
