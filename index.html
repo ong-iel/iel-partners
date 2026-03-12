@@ -410,10 +410,15 @@
 <script>
 function norm(s) {
   if (!s) return '';
-  return s.toLowerCase()
-    .split('').map(function(c) {
-      return {'ș':'s','ț':'t','ă':'a','â':'a','î':'i','Ș':'s','Ț':'t','ş':'s','ţ':'t'}[c] || c;
-    }).join('');
+  var map = {};
+  map['\u015f']='s'; map['\u015e']='s';
+  map['\u0163']='t'; map['\u0162']='t';
+  map['\u0219']='s'; map['\u0218']='s';
+  map['\u021b']='t'; map['\u021a']='t';
+  map['\u0103']='a'; map['\u0102']='a';
+  map['\u00e2']='a'; map['\u00c2']='a';
+  map['\u00ee']='i'; map['\u00ce']='i';
+  return s.toLowerCase().split('').map(function(c){ return map[c]||c; }).join('');
 }
 const DEFAULT_CATS = ['Liceu','Școală','Centru','ONG','Partener','Media','Instituție Publică'];
 const CAT_COLORS = {
