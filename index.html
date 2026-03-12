@@ -19,7 +19,7 @@
     --white:      #FFFFFF;
     --bg:         #f7fcfc;   /* very light cyan-tinted bg */
     --surface:    #FFFFFF;
-    --border:     #d6eef0
+    --border:     #d6eef0;
     --muted:      #6b9096;
     --ink:        #1c2b2c;   /* near-black for all body text */
     --shadow:     rgba(15,184,194,0.12);
@@ -412,8 +412,8 @@ function norm(s) {
   if (!s) return '';
   var map = {};
   map['\u015f']='s'; map['\u015e']='s';
-  map['\u0219']='s'; map['\u0218']='s';
   map['\u0163']='t'; map['\u0162']='t';
+  map['\u0219']='s'; map['\u0218']='s';
   map['\u021b']='t'; map['\u021a']='t';
   map['\u0103']='a'; map['\u0102']='a';
   map['\u00e2']='a'; map['\u00c2']='a';
@@ -998,11 +998,6 @@ function saveNewPartner() {
   closeModal(); render();
 }
 document.getElementById('addModal').addEventListener('click', e=>{ if(e.target===document.getElementById('addModal')) closeModal(); });
-
-
-  document.getElementById('searchClear').style.display = search ? 'block' : 'none';
-  render();
-});
 
 // ── SEARCH INIT ──
 (function() {
