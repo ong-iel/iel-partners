@@ -377,7 +377,7 @@
       <div class="fg"><label>Rol</label><input class="fi" id="f-crole" placeholder="director, profă…"></div>
       <div class="fg"><label>Telefon</label><input class="fi" id="f-cphone" placeholder="+40 7xx xxx xxx"></div>
       <div class="fg"><label>Email</label><input class="fi" id="f-cemail" type="email" placeholder="persoana@..."></div>
-      <div class="fg full"><label>Relație cu iEL (cine din echipă a comunicat)</label><input class="fi" id="f-crel" list="ielTeamList" placeholder="ex: Adina, Vlad, Tim…"></div>
+      <div class="fg full"><label>Relație cu iEL (cine din echipă a comunicat)</label><input class="fi" id="f-crel" placeholder="ex: Vera, Vlad, Tim…"></div>
 
       <div class="section-divider">Note</div>
       <div class="fg full"><textarea class="fi notes-field" id="f-notes" style="min-height:65px" placeholder="Observații, follow-up-uri…"></textarea></div>
@@ -635,7 +635,7 @@ function renderDetail(p) {
         <div class="fg full"><label>Rol</label><input class="fi" value="${esc(c.role||'')}" onchange="upC(${p.id},${i},'role',this.value)"></div>
         <div class="fg"><label>Telefon</label><input class="fi" value="${esc(c.phone||'')}" onchange="upC(${p.id},${i},'phone',this.value)"></div>
         <div class="fg"><label>Email</label><input class="fi" value="${esc(c.email||'')}" onchange="upC(${p.id},${i},'email',this.value)"></div>
-        <div class="fg full"><label>Relație cu iEL (cine din echipă a comunicat)</label><input class="fi" list="ielTeamList" value="${esc(c.ielRelation||'')}" placeholder="ex: Adina, Vlad, Tim…" onchange="upC(${p.id},${i},'ielRelation',this.value)"></div>
+        <div class="fg full"><label>Relație cu iEL (cine din echipă a comunicat)</label><input class="fi" value="${esc(c.ielRelation||'')}" placeholder="ex: Vera, Vlad, Tim…" onchange="upC(${p.id},${i},'ielRelation',this.value)"></div>
       </div>
     </div>`).join('');
 
