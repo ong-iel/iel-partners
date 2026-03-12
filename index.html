@@ -676,7 +676,7 @@ let filter='all', subfilter='all', search='', sortField='name', sortDir=1, selec
 function filteredData() {
   let d = [...partners];
   if (filter !== 'all') d = d.filter(p => p.category === filter);
-  if (subfilter !== 'all') d = d.filter(p => (p.subcategory||'').trim() === subfilter);
+  if (subfilter !== 'all') d = d.filter(p => (p.subcategory||'').split(',').map(s=>s.trim()).includes(subfilter));
   if (search) {
     const q = search.toLowerCase();
     d = d.filter(p =>
@@ -720,10 +720,10 @@ function setRating(pid, val) {
 function renderSubTabs() {
   const bar = document.getElementById('subtabBar');
   if (filter === 'all') { bar.style.display = 'none'; bar.innerHTML = ''; return; }
-  // collect distinct non-empty subcategories for current category
+  // collect distinct individual keywords from all subcategory strings
   const subs = [...new Set(
     partners.filter(p => p.category === filter && (p.subcategory||'').trim())
-            .map(p => p.subcategory.trim())
+            .flatMap(p => p.subcategory.split(',').map(s=>s.trim()).filter(Boolean))
   )].sort((a,b) => a.localeCompare(b,'ro'));
   if (!subs.length) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
   bar.style.display = 'block';
