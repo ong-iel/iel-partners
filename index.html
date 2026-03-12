@@ -435,14 +435,15 @@ function promptAddCategory() {
   if (!name || !name.trim()) return;
   const trimmed = name.trim();
   if (getCats().includes(trimmed)) { alert('Categoria există deja.'); return; }
-  // Category will appear once a partner is assigned to it
-  // For now just pre-select it in the add modal
+  openAddModal();
   const sel = document.getElementById('f-category');
   if (sel) {
-    const opt = document.createElement('option');
-    opt.value = trimmed; opt.textContent = trimmed; opt.selected = true;
-    sel.appendChild(opt);
-    alert(`Categoria "${trimmed}" a fost adăugată. Salvează un partener cu această categorie pentru a o activa.`);
+    if (![...sel.options].find(o => o.value === trimmed)) {
+      const opt = document.createElement('option');
+      opt.value = trimmed; opt.textContent = trimmed;
+      sel.insertBefore(opt, sel.lastElementChild);
+    }
+    sel.value = trimmed;
   }
 }
 
