@@ -423,7 +423,7 @@ const PALETTE = [
 let paletteIdx = 0;
 
 function getCats() {
-  const custom = partners.map(p=>p.category).filter(c=>!DEFAULT_CATS.includes(c));
+  const custom = partners.filter(p=>p&&p.category).map(p=>p.category).filter(c=>!DEFAULT_CATS.includes(c));
   return [...DEFAULT_CATS, ...[...new Set(custom)]];
 }
 
@@ -993,7 +993,7 @@ async function loadFromBackend() {
     if (!res.ok) throw new Error('load failed');
     const data = await res.json();
     if (data && Array.isArray(data.partners)) {
-      partners = data.partners;
+      partners = (data.partners || []).filter(p => p && p.id && p.name);
       nextId = partners.length ? Math.max(...partners.map(p=>p.id)) + 1 : 51;
     }
   } catch(e) {
