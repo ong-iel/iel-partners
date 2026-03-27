@@ -1,6 +1,5 @@
 const { google } = require('googleapis');
 const { OAuth2Client } = require('google-auth-library');
-const Anthropic = require('@anthropic-ai/sdk');
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const ALLOWED_DOMAIN = 'innoedulab.eu';
@@ -28,6 +27,28 @@ function extractSheetId(url) {
   return match ? match[1] : null;
 }
 
+async function callClaude(prompt) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 8000,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error('Claude API error: ' + err);
+  }
+  const data = await res.json();
+  return data.content[0].text.trim();
+}
+
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -38,7 +59,7 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: 'Method not allowed' };
 
-  // Verify auth
+  // Verify Google auth token
   const token = (event.headers['authorization'] || '').replace('Bearer ', '');
   if (!token) return { statusCode: 401, headers, body: JSON.stringify({ error: 'No token' }) };
   try { await verifyToken(token); }
@@ -50,7 +71,7 @@ exports.handler = async (event) => {
   const sheetId = extractSheetId(sheetUrl);
   if (!sheetId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid Google Sheet URL' }) };
 
-  // Read the sheet
+  // Read the sheet via Google Sheets API
   let rows;
   try {
     const auth = await getAuth();
@@ -62,7 +83,7 @@ exports.handler = async (event) => {
     rows = res.data.values || [];
   } catch (e) {
     const msg = e.message || '';
-    if (msg.includes('403') || msg.includes('permission')) {
+    if (msg.includes('403') || msg.includes('permission') || msg.includes('PERMISSION')) {
       return { statusCode: 403, headers, body: JSON.stringify({ error: 'Sheet not accessible. Make sure it is shared with iel-parteneri-bot@iel-parteneri.iam.gserviceaccount.com' }) };
     }
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'Could not read sheet: ' + msg }) };
@@ -70,24 +91,19 @@ exports.handler = async (event) => {
 
   if (rows.length < 2) return { statusCode: 200, headers, body: JSON.stringify({ partners: [] }) };
 
-  // Use Claude to map columns and extract structured data
-  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-  const headers_row = rows[0];
-  const data_rows = rows.slice(1).filter(r => r.some(c => c && c.trim()));
-
-  // Send first 50 rows max to Claude for mapping
-  const sample = data_rows.slice(0, 50);
+  const headersRow = rows[0];
+  const dataRows = rows.slice(1).filter(r => r.some(c => c && String(c).trim()));
+  const sample = dataRows.slice(0, 50);
 
   const prompt = `You are helping import partner/contact data into a CRM database.
 
 The spreadsheet has these column headers (row 1):
-${JSON.stringify(headers_row)}
+${JSON.stringify(headersRow)}
 
 Here are the data rows (up to 50):
 ${JSON.stringify(sample)}
 
-Your job: map each row to this exact JSON structure and return ONLY a JSON array, no preamble, no markdown:
+Your job: map each row to this exact JSON structure and return ONLY a JSON array, no preamble, no markdown backticks:
 [
   {
     "name": "institution or person name (required, skip row if empty)",
@@ -111,26 +127,20 @@ Your job: map each row to this exact JSON structure and return ONLY a JSON array
 
 Rules:
 - Skip rows where name is empty or clearly a header repeat
-- Merge any "notes", "observations", "context" type fields intelligently
+- Merge any notes/observations/context fields intelligently into the right fields
 - If a column clearly maps to a contact person (not the institution), put it in contacts array: {"name":"","role":"","phone":"","email":"","ielRelation":""}
 - Romanian column names are common: Denumire=name, Telefon=phone, Email=email, Adresă=address, Site=website, Categorie=category, Observații=notes
-- Return ONLY the JSON array, nothing else`;
+- Return ONLY the JSON array, nothing else, no markdown`;
 
   let mapped;
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 8000,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    const text = response.content[0].text.trim();
-    const clean = text.replace(/^```json\n?/, '').replace(/^```\n?/, '').replace(/\n?```$/, '').trim();
+    const text = await callClaude(prompt);
+    const clean = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
     mapped = JSON.parse(clean);
   } catch (e) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'AI mapping failed: ' + e.message }) };
   }
 
-  // Assign temporary IDs for frontend use
   mapped = mapped.map((p, i) => ({ ...p, _importId: i + 1 }));
 
   return {
