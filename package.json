@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "iEL Partner Database – Netlify + Google Sheets backend",
   "dependencies": {
-    "googleapis": "^140.0.0"
+    "googleapis": "^140.0.0",
+        "@anthropic-ai/sdk": "^0.39.0",
+        "google-auth-library": "^9.0.0"
   }
 }
