@@ -1,8 +1,24 @@
 const { google } = require('googleapis');
+const { OAuth2Client } = require('google-auth-library');
 
 const SHEET_ID = process.env.GOOGLE_SHEET_ID;
 const SHEET_TAB = 'ParteneriDB';
-const CHUNK_SIZE = 40000; // safe chars per cell
+const CHUNK_SIZE = 40000;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const ALLOWED_DOMAIN = 'innoedulab.eu';
+
+async function verifyToken(token) {
+  const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+  if (!payload.email.endsWith('@' + ALLOWED_DOMAIN)) {
+    throw new Error('Unauthorized domain');
+  }
+  return payload;
+}
 
 async function getAuth() {
   const auth = new google.auth.JWT({
@@ -17,16 +33,27 @@ async function getAuth() {
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   };
+
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
+
+  // Verify Google token
+  const authHeader = event.headers['authorization'] || '';
+  const token = authHeader.replace('Bearer ', '');
+  if (!token) return { statusCode: 401, headers, body: JSON.stringify({ error: 'No token' }) };
+
+  try {
+    await verifyToken(token);
+  } catch (e) {
+    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
+  }
 
   const auth = await getAuth();
   const sheets = google.sheets({ version: 'v4', auth });
 
   if (event.httpMethod === 'GET') {
-    // Read all rows from col A, concatenate, parse JSON
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
       range: `${SHEET_TAB}!A:A`,
@@ -41,27 +68,20 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'POST') {
     const body = JSON.parse(event.body);
     const fullJson = JSON.stringify(body);
-    
-    // Split into chunks
     const chunks = [];
     for (let i = 0; i < fullJson.length; i += CHUNK_SIZE) {
       chunks.push([fullJson.slice(i, i + CHUNK_SIZE)]);
     }
-
-    // Clear sheet first
     await sheets.spreadsheets.values.clear({
       spreadsheetId: SHEET_ID,
       range: `${SHEET_TAB}!A:A`,
     });
-
-    // Write chunks
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
       range: `${SHEET_TAB}!A1`,
       valueInputOption: 'RAW',
       requestBody: { values: chunks },
     });
-
     return { statusCode: 200, headers, body: JSON.stringify({ ok: true, chunks: chunks.length }) };
   }
 
