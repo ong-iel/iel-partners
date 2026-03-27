@@ -234,6 +234,29 @@
   .new-record-meta{color:var(--muted);font-size:11px;}
   .import-error{background:#fff0f0;border:1px solid var(--orange-md);border-radius:8px;padding:12px 14px;color:#b53040;font-size:13px;margin-top:12px;line-height:1.5;}
 
+  /* BULK EDIT */
+  .bulk-cb-col{width:36px;text-align:center;padding-left:10px!important;}
+  .bulk-checkbox{appearance:none;width:16px;height:16px;border:2px solid var(--border);border-radius:3px;cursor:pointer;position:relative;transition:all 0.15s;flex-shrink:0;}
+  .bulk-checkbox:checked{background:var(--orange);border-color:var(--orange);}
+  .bulk-checkbox:checked::after{content:'✓';position:absolute;color:white;font-size:10px;font-weight:700;top:50%;left:50%;transform:translate(-50%,-50%);}
+  tbody tr.bulk-selected{background:#fff8f8;outline:2px solid var(--orange-md);outline-offset:-2px;}
+  .btn-bulk{padding:8px 18px;background:white;color:#8a5200;border:1.5px solid #f0a500;border-radius:8px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+  .btn-bulk:hover{background:#fff8e0;border-color:#e09000;}
+  .btn-bulk.active{background:#f0a500;color:white;border-color:#e09000;}
+
+  /* BULK BAR */
+  #bulk-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;background:var(--ink);color:white;padding:14px 40px;flex-direction:row;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 -4px 24px rgba(0,0,0,0.2);}
+  #bulk-bar.open{display:flex;}
+  .bulk-bar-count{font-size:13px;font-weight:600;white-space:nowrap;color:#7dd3d8;}
+  .bulk-bar-fields{display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center;}
+  .bulk-fi{padding:7px 10px;border:1.5px solid rgba(255,255,255,0.2);border-radius:7px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--ink);background:white;outline:none;min-width:140px;}
+  .bulk-fi:focus{border-color:var(--orange);}
+  .bulk-label{font-size:11px;font-weight:600;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
+  .btn-bulk-apply{padding:8px 20px;background:var(--orange);color:white;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity 0.15s;}
+  .btn-bulk-apply:hover{opacity:0.88;}
+  .btn-bulk-cancel{padding:8px 14px;background:none;color:rgba(255,255,255,0.7);border:1.5px solid rgba(255,255,255,0.2);border-radius:8px;font-family:'Poppins',sans-serif;font-size:13px;cursor:pointer;white-space:nowrap;}
+  .btn-bulk-cancel:hover{color:white;border-color:rgba(255,255,255,0.5);}
+
   ::-webkit-scrollbar{width:5px;}
   ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
   ::-webkit-scrollbar-thumb:hover{background:var(--orange-md);}
@@ -277,6 +300,7 @@
   </div>
   <div class="filter-tabs" id="filterTabs"></div>
   <button class="btn-import" onclick="openImportModal()">⬆ Import</button>
+  <button class="btn-bulk" id="btnBulkEdit" onclick="toggleBulkMode()">☑ Bulk edit</button>
   <button class="btn-add" onclick="openAddModal()">+ Add</button>
 </div>
 
@@ -341,7 +365,7 @@
         <strong>⚠️ First — share your sheet with the iEL service account</strong>
         In your Google Sheet, click <em>Share</em> and add this email as a <strong>Viewer</strong>:
         <div class="sa-email">
-          <span>iel-parteneri-bot@iel-parteneri.iam.gserviceaccount.com</span>
+          <span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="254c40490855445751404b40574c08474a51654c40490855445751404b40574c0b4c44480b42564057534c46404446464a504b510b464a48">[email&#160;protected]</a></span>
           <button class="btn-copy" onclick="copyServiceAccount()">Copy</button>
         </div>
         Done that? Paste your sheet URL below.
@@ -393,9 +417,28 @@
   </div>
 </div>
 
+<!-- BULK EDIT BAR -->
+<div id="bulk-bar">
+  <span class="bulk-bar-count" id="bulk-count">0 selected</span>
+  <div class="bulk-bar-fields">
+    <span class="bulk-label">Set:</span>
+    <select class="bulk-fi" id="bulk-category">
+      <option value="">— Category —</option>
+    </select>
+    <input class="bulk-fi" id="bulk-subcategory" placeholder="Subcategory (optional)">
+    <input class="bulk-fi" id="bulk-address" placeholder="Address / City (optional)">
+    <input class="bulk-fi" id="bulk-website" placeholder="Website (optional)">
+    <input class="bulk-fi" id="bulk-email" placeholder="Email (optional)">
+    <input class="bulk-fi" id="bulk-phone" placeholder="Phone (optional)">
+    <input class="bulk-fi" id="bulk-context" placeholder="Context (optional)">
+  </div>
+  <button class="btn-bulk-apply" onclick="applyBulkEdit()">Apply to selected</button>
+  <button class="btn-bulk-cancel" onclick="toggleBulkMode()">Cancel</button>
+</div>
+
 </div><!-- /#app-root -->
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ── AUTH ──
 window._googleToken = null;
 
@@ -476,10 +519,23 @@ function render(){
   document.getElementById('ongCount').textContent=partners.filter(p=>['ONG','Partener'].includes(p.category)).length;
   const data=filteredData();
   document.getElementById('noResults').style.display=data.length?'none':'block';
+  // Update select-all checkbox in header
+  const thCb=document.getElementById('th-bulk-cb');
+  if(_bulkMode){
+    if(!thCb){
+      const allChecked=data.length>0&&data.every(p=>_bulkSelected.has(p.id));
+      document.querySelector('thead tr').insertAdjacentHTML('afterbegin',`<th class="bulk-cb-col" id="th-bulk-cb"><input type="checkbox" class="bulk-checkbox" ${allChecked?'checked':''} onchange="toggleSelectAll(this.checked)" title="Select all"></th>`);
+    }
+  } else {
+    if(thCb) thCb.remove();
+  }
   document.getElementById('tableBody').innerHTML=data.map(p=>{
     const c=(p.contacts||[])[0], hasNotes=(p.notes||'').trim().length>0, city=(p.address||'').split(',')[0].trim();
     const ch=c?`<div class="contact-mini"><div class="cm-name">${esc(c.name)}</div>${c.role?`<div class="cm-role">${esc(c.role)}</div>`:''} ${c.ielRelation?`<div class="cm-rel">↳ ${esc(c.ielRelation)}</div>`:''}</div>`:'<span style="color:var(--muted);font-size:12px">—</span>';
-    return `<tr onclick="selectP(${p.id})" class="${selectedId===p.id?'selected':''}">
+    const bulkCb=_bulkMode?`<td class="bulk-cb-col" onclick="event.stopPropagation()"><input type="checkbox" class="bulk-checkbox" ${_bulkSelected.has(p.id)?'checked':''} onchange="toggleBulkSelect(${p.id},this.checked)"></td>`:'';
+    const rowClick=_bulkMode?`toggleBulkSelect(${p.id},!_bulkSelected.has(${p.id}));render()`:`selectP(${p.id})`;
+    return `<tr onclick="${rowClick}" class="${_bulkMode&&_bulkSelected.has(p.id)?'bulk-selected':selectedId===p.id?'selected':''}">
+      ${bulkCb}
       <td><div class="partner-name">${esc(p.name)}<small>${p.website?esc(p.website):'—'}${city?` · <span class="city-chip">${esc(city)}</span>`:''}</small></div></td>
       <td>${catBadge(p.category)}${p.subcategory?`<div style="font-size:10px;color:var(--muted);margin-top:3px;font-weight:500">${esc(p.subcategory)}</div>`:''}</td>
       <td>${ch}</td>
@@ -763,6 +819,71 @@ function confirmImport(){
   closeImportModal();render();triggerSave();
   const merged=Object.values(_imp.dupChoices).filter(v=>v==='merge'||v==='use').length;
   setTimeout(()=>alert(`✅ Import complete!\n• ${toAdd.length} records added\n• ${merged} duplicates resolved`),100);
+}
+
+// ── BULK EDIT ──
+let _bulkMode=false, _bulkSelected=new Set();
+
+function toggleBulkMode(){
+  _bulkMode=!_bulkMode;
+  _bulkSelected.clear();
+  const btn=document.getElementById('btnBulkEdit');
+  btn.classList.toggle('active',_bulkMode);
+  btn.textContent=_bulkMode?'✕ Exit bulk edit':'☑ Bulk edit';
+  document.getElementById('bulk-bar').classList.remove('open');
+  if(_bulkMode){
+    const sel=document.getElementById('bulk-category');
+    sel.innerHTML='<option value="">— Category (unchanged) —</option>'+getCats().map(c=>`<option value="${esc(c)}">${esc(catLabel(c))}</option>`).join('');
+    ['bulk-subcategory','bulk-address','bulk-website','bulk-email','bulk-phone','bulk-context'].forEach(id=>document.getElementById(id).value='');
+  }
+  if(_bulkMode&&selectedId)closeDetail();
+  render();
+}
+
+function toggleBulkSelect(id,checked){
+  if(checked)_bulkSelected.add(id);
+  else _bulkSelected.delete(id);
+  updateBulkBar();
+  render();
+}
+
+function toggleSelectAll(checked){
+  const data=filteredData();
+  if(checked)data.forEach(p=>_bulkSelected.add(p.id));
+  else _bulkSelected.clear();
+  updateBulkBar();
+  render();
+}
+
+function updateBulkBar(){
+  const n=_bulkSelected.size;
+  document.getElementById('bulk-bar').classList.toggle('open',n>0&&_bulkMode);
+  document.getElementById('bulk-count').textContent=n+' selected';
+}
+
+function applyBulkEdit(){
+  if(_bulkSelected.size===0)return;
+  const category=document.getElementById('bulk-category').value;
+  const subcategory=document.getElementById('bulk-subcategory').value.trim();
+  const address=document.getElementById('bulk-address').value.trim();
+  const website=document.getElementById('bulk-website').value.trim();
+  const email=document.getElementById('bulk-email').value.trim();
+  const phone=document.getElementById('bulk-phone').value.trim();
+  const context=document.getElementById('bulk-context').value.trim();
+  partners.forEach(p=>{
+    if(!_bulkSelected.has(p.id))return;
+    if(category)p.category=category;
+    if(subcategory)p.subcategory=subcategory;
+    if(address)p.address=address;
+    if(website)p.website=website;
+    if(email)p.email=email;
+    if(phone)p.phone=phone;
+    if(context)p.context=context;
+  });
+  const n=_bulkSelected.size;
+  _bulkSelected.clear();
+  triggerSave();render();updateBulkBar();
+  setTimeout(()=>alert(`✅ Updated ${n} records.`),50);
 }
 </script>
 </body>
