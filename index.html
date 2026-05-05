@@ -462,8 +462,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── HELPERS ──
 function norm(s) {
   if (!s) return '';
-  const map = {'\u015f':'s','\u015e':'s','\u0163':'t','\u0162':'t','\u0219':'s','\u0218':'s','\u021b':'t','\u021a':'t','\u0103':'a','\u0102':'a','\u00e2':'a','\u00c2':'a','\u00ee':'i','\u00ce':'i'};
-  return s.toLowerCase().split('').map(c => map[c]||c).join('');
+  var map = {};
+  map['\u015f']='s'; map['\u015e']='s';
+  map['\u0219']='s'; map['\u0218']='s';
+  map['\u0163']='t'; map['\u0162']='t';
+  map['\u021b']='t'; map['\u021a']='t';
+  map['\u0103']='a'; map['\u0102']='a';
+  map['\u00e2']='a'; map['\u00c2']='a';
+  map['\u00ee']='i'; map['\u00ce']='i';
+  return s.toLowerCase().split('').map(function(c){ return map[c]||c; }).join('');
 }
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
