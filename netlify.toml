@@ -1,4 +1,3 @@
-cat > ~/iel-partners/netlify.toml << 'EOF'
 [build]
   publish = "."
   functions = "netlify/functions"
@@ -6,11 +5,11 @@ cat > ~/iel-partners/netlify.toml << 'EOF'
 [functions]
   node_bundler = "esbuild"
 
-  [functions.import]
-    timeout = 26
+[functions.import]
+  timeout = 26
 
-  [functions.export]
-    timeout = 30
+[functions.export]
+  timeout = 30
 
 [[redirects]]
   from = "/api/partners"
@@ -26,4 +25,3 @@ cat > ~/iel-partners/netlify.toml << 'EOF'
   from = "/api/export"
   to = "/.netlify/functions/export"
   status = 200
-EOF
