@@ -58,6 +58,9 @@
   .btn-add:hover{opacity:0.88;}
   .btn-import{padding:8px 18px;background:white;color:var(--navy);border:1.5px solid var(--navy);border-radius:8px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
   .btn-import:hover{background:var(--navy);color:white;}
+  .btn-export{padding:8px 18px;background:white;color:#1a7340;border:1.5px solid #34a853;border-radius:8px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+  .btn-export:hover{background:#34a853;color:white;}
+  .btn-export:disabled{opacity:0.5;cursor:not-allowed;}
 
   /* MAIN */
   .main{display:flex;height:calc(100vh - 115px);overflow:hidden;}
@@ -301,6 +304,7 @@
   <div class="filter-tabs" id="filterTabs"></div>
   <button class="btn-import" onclick="openImportModal()">⬆ Import</button>
   <button class="btn-bulk" id="btnBulkEdit" onclick="toggleBulkMode()">☑ Bulk edit</button>
+  <button class="btn-export" onclick="exportToSheets()">📊 Export GSheets</button>
   <button class="btn-add" onclick="openAddModal()">+ Add</button>
 </div>
 
@@ -365,7 +369,7 @@
         <strong>⚠️ First — share your sheet with the iEL service account</strong>
         In your Google Sheet, click <em>Share</em> and add this email as a <strong>Viewer</strong>:
         <div class="sa-email">
-          <span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="254c40490855445751404b40574c08474a51654c40490855445751404b40574c0b4c44480b42564057534c46404446464a504b510b464a48">[email&#160;protected]</a></span>
+          <span>iel-parteneri-bot@iel-parteneri.iam.gserviceaccount.com</span>
           <button class="btn-copy" onclick="copyServiceAccount()">Copy</button>
         </div>
         Done that? Paste your sheet URL below.
@@ -438,7 +442,7 @@
 
 </div><!-- /#app-root -->
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ── AUTH ──
 window._googleToken = null;
 
@@ -526,7 +530,6 @@ function render(){
   document.getElementById('ongCount').textContent=partners.filter(p=>['ONG','Partener'].includes(p.category)).length;
   const data=filteredData();
   document.getElementById('noResults').style.display=data.length?'none':'block';
-  // Update select-all checkbox in header
   const thCb=document.getElementById('th-bulk-cb');
   if(_bulkMode){
     if(!thCb){
@@ -640,6 +643,32 @@ document.getElementById('addModal').addEventListener('click',e=>{if(e.target===d
   inp.addEventListener('keydown',e=>{if(e.key==='Escape'){inp.value='';search='';btn.style.display='none';render();}});
 })();
 
+// ── EXPORT TO GOOGLE SHEETS ──
+async function exportToSheets() {
+  const btn = document.querySelector('.btn-export');
+  const orig = btn.textContent;
+  btn.textContent = '⏳ Creating sheet...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/export', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + window._googleToken }
+    });
+    const data = await res.json();
+    if (data.url) {
+      btn.textContent = '✓ Done!';
+      window.open(data.url, '_blank');
+      setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+    } else {
+      throw new Error(data.error || 'Export failed');
+    }
+  } catch(e) {
+    alert('Export failed: ' + e.message);
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+}
+
 // ── BACKEND SYNC ──
 let saveTimeout=null, autosaveInterval=null, _dirty=false;
 
@@ -655,7 +684,6 @@ async function loadFromBackend(){
     }
   } catch(e){console.warn('Could not load from backend:',e);}
   hideStatus();render();
-  // 30-second autosave heartbeat
   if(autosaveInterval)clearInterval(autosaveInterval);
   autosaveInterval=setInterval(()=>{if(_dirty)saveToBackend();},30000);
 }
@@ -676,7 +704,6 @@ function triggerSave(){_dirty=true;clearTimeout(saveTimeout);saveTimeout=setTime
 function showStatus(type){const el=document.getElementById('syncStatus');el.className='sync-status '+type;el.textContent=type==='loading'?'⏳ Loading…':type==='saving'?'💾 Saving…':type==='saved'?'✓ Saved':'⚠ Save error';el.style.display='inline-block';}
 function hideStatus(){document.getElementById('syncStatus').style.display='none';}
 
-// Mark dirty on any detail panel change
 document.addEventListener('change',e=>{if(e.target.closest('#detailInner'))_dirty=true;});
 
 const _oSD=saveDetail;saveDetail=function(id){_oSD(id);triggerSave();};
