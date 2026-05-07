@@ -10,6 +10,7 @@
 
 [functions.export]
   timeout = 30
+  node_bundler = "nft"
 
 [[redirects]]
   from = "/api/partners"
